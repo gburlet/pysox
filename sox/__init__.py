@@ -2,10 +2,15 @@
 """ init method for sox module """
 from .log import logger
 import os
+import sys
 
 # Check that SoX is installed and callable
 NO_SOX = False
-stream_handler = os.popen('sox -h')
+sox_path = "sox"
+if hasattr(sys, '_MEIPASS'):
+    sox_path = os.path.abspath(os.path.join(sys._MEIPASS, "sox"))
+
+stream_handler = os.popen('%s -h' % sox_path)
 if not len(stream_handler.readlines()):
     logger.warning("""SoX could not be found!
 

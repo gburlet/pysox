@@ -4,6 +4,8 @@ from .log import logger
 import subprocess
 from subprocess import CalledProcessError
 import numpy as np
+import sys
+import os
 
 from . import NO_SOX
 
@@ -42,10 +44,15 @@ def sox(args, src_array=None, decode_out_with_utf=True):
         Returns stderr as a string.
 
     '''
+
+    sox_path = "sox"
+    if hasattr(sys, '_MEIPASS'):
+        sox_path = os.path.abspath(os.path.join(sys._MEIPASS, "sox"))
+
     if args[0].lower() != "sox":
-        args.insert(0, "sox")
+        args.insert(0, sox_path)
     else:
-        args[0] = "sox"
+        args[0] = sox_path
 
     try:
         logger.info("Executing: %s", ' '.join(args))
@@ -106,7 +113,15 @@ def _get_valid_formats():
     if NO_SOX:
         return []
 
-    so = subprocess.check_output(['sox', '-h'])
+    sox_path = "sox"
+    if hasattr(sys, '_MEIPASS'):
+        sox_path = os.path.abspath(os.path.join(sys._MEIPASS, "sox"))
+
+    so = subprocess.check_output(
+        [sox_path, '-h'],
+        stdin=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
     if type(so) is not str:
         so = str(so, encoding='UTF-8')
     so = so.split('\n')
@@ -139,14 +154,18 @@ def soxi(filepath, argument):
     if argument not in SOXI_ARGS:
         raise ValueError("Invalid argument '{}' to SoXI".format(argument))
 
-    args = ['sox', '--i']
+    sox_path = "sox"
+    if hasattr(sys, '_MEIPASS'):
+        sox_path = os.path.abspath(os.path.join(sys._MEIPASS, "sox"))
+    args = [sox_path, '--i']
     args.append("-{}".format(argument))
     args.append(filepath)
 
     try:
         shell_output = subprocess.check_output(
             args,
-            stderr=subprocess.PIPE
+            stdin=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
     except CalledProcessError as cpe:
         logger.info("SoXI error message: {}".format(cpe.output))
